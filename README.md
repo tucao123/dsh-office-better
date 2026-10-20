@@ -34,12 +34,20 @@ DSH（DeepSeek Harness）的 Office 文档插件：**确定性**生成 pptx / do
 
 ## 安装
 
-用宿主的插件管理器安装（它负责装包、写 bundle 选择、处理版本门禁），**不要手改 profile 的 `package.json`、也不要在 profile 目录里跑 pnpm**：
+**方式一：从 npm 装（推荐，最省事）**
+
+```text
+plugin_manager({ action: "install_bundle", target: "dsh-office-better@0.3.0" })
+```
+
+插件管理器负责装包、写 bundle 选择、处理版本门禁；**不要手改 profile 的 `package.json`、也不要在 profile 目录里跑 pnpm**。
+
+**方式二：从本地检出装（改代码 / 调试用）**
 
 ```text
 plugin_manager({
   action: "install_bundle",
-  target: "C:\\Users\\<你>\\Desktop\\codeout\\projects\\dsh-office-better\\dsh-office-better"
+  target: "C:\\Users\\<你>\\codeout\\projects\\dsh-office-better\\dsh-office-better"
 })
 ```
 
