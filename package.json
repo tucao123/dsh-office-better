@@ -1,6 +1,6 @@
 {
   "name": "dsh-office-better",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "DSH Office 插件：确定性 PPT/DOCX/XLSX 生成 + IR 预览 + 数值化版式检查，零外部依赖",
   "license": "MIT",
   "type": "module",
@@ -8,6 +8,9 @@
   "exports": {
     ".": {
       "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
@@ -38,7 +41,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node test/smoke.mjs"
+    "test": "node test/smoke.mjs && node test/mount.mjs && node test/client.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -48,6 +51,9 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
     }
   }
 }

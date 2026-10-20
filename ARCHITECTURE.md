@@ -172,20 +172,45 @@ office_* 工具执行 → 事件总线 → SSE → 侧边栏面板
 
 ---
 
-## 8. 已知限制
+## 8. 客户端半边（侧边栏预览，v0.2）
+
+静态客户端插件的打包契约由宿主 `@deepseek-ai/dsh-client-modules` 定义，逆向所得：
+
+- 宿主在**启动时**扫描 Loader 条目里声明了 `dsh.client` 的包，解析 `exports["./client"]`，按内容 sha1 生成 rev，暴露为 `/plugins/<包名>/client.js?rev=<hash>`；
+- bundle 必须是 `window.__ModuleLoader__.load({ id, factory(require) })` 形态，factory 返回的 `module.exports` 里要有 `apply(ctx)`，可选 `inject`（cordis 服务名数组）；
+- `dsh.client.inject` 声明的是**模块依赖**（如 `@deepseek-ai/dsh-client-ui-commands`），不是服务；
+- **插件集合变化只在重启后生效**——所以新增客户端 bundle 必须重启 DSH 进程（服务端的新工具/路由可以热加载）。
+
+槽位选择（先用 `Slots.listSubTree` 查证的）：
+
+| 槽位 | 形态 | 用途 |
+|---|---|---|
+| `conversation.session.header.utilities` | list，scope=session | 放触发按钮；标准 props 带 `sessionId`，正好拿到当前会话 |
+| `shell.overlay` | list，scope=root，click-through | 放浮层面板；新 id 是**新增**而非替换，不遮挡宿主任何 UI |
+
+没有选 `details`（右栏）：它是 single 槽，"占位即接管"，会连带失去宿主的工具详情面板。浮层方案对宿主零侵入。
+
+面板本身：文件列表（3 秒轮询 `/files`）+ `iframe` 指向 `/preview`。因为预览 HTML 由宿主同源路由提供，`iframe` 不需要任何跨域/凭据处理，也不需要 SSE —— 原实现那套"双通道 SSE + Host/Origin 改写"彻底不需要。
+
+无浏览器验证：`test/client.mjs` 用桩 `window.__ModuleLoader__` / `React` / `slots` / `fetch` 实跑 `lib/client.js`，断言两个 Slot 注册、按钮标签、点击后的 `/files` 请求、面板标题与文件列表、以及 iframe `src` 的 session/文件名编码。
+
+---
+
+## 9. 已知限制
 
 1. **不含图片/SVG/图表**：`pptx` 只画形状与文本；`add shape` 类原语暂不暴露。需要图片时得自己往 zip 里塞 media part（规划中）。
 2. **字宽度量是估算**：非 CJK、非 Segoe UI/YaHei 的字体可能有 ±5% 偏差；偏差会先被 lint 的 `LINE_TOO_WIDE` 抓到，而不是直接溢出。
 3. **不修改第三方 Office 文件**：`office_read` 只读；原地编辑只支持本插件自己生成、且有旁挂 IR 的文件。
-4. **无客户端 UI**：预览走浏览器页面，没有侧边栏 iframe（原实现的侧边栏要打包 client bundle；这个可以后续补，收益主要是"少开一个标签页"）。
+4. **侧边栏面板需要重启才出现**：客户端 bundle 由宿主启动时扫描（见上节）；面板打开后列表靠 3 秒轮询刷新，不是推送式。
 5. **docx 无图片、脚注、页眉页脚、目录域**；xlsx 无图表、条件格式、数据校验。
 
 ---
 
-## 9. 路线图
+## 10. 路线图
 
 - [ ] 图片与形状原语（`office_image`、自由形状）
-- [ ] 客户端侧边栏面板（Slot 注册 + iframe 指向 `/preview`）
+- [x] 客户端侧边栏面板（Slot 注册 + iframe 指向 `/preview`）
+- [ ] 面板改为事件推送（宿主侧 SSE `/events`），替掉 3 秒轮询
 - [ ] docx 图片、页眉页脚、目录域
 - [ ] xlsx 数字格式、条件格式
 - [ ] `office_deck` 支持多主题混排与逐页样式覆盖

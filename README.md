@@ -96,17 +96,26 @@ office_deck({
 
 ## 预览
 
-生成后 `office_preview` 给的地址（`/api/office-better/index?session=…`）在 DSH Web 里直接打开：
+两种入口，读同一份 `/api/office-better` 路由：
+
+**① 侧边栏浮层（v0.2 起）**：会话头部右上角多一个 `Office` 按钮，点开右侧浮层——文件列表（每 3 秒自动刷新）+ 内嵌 iframe 预览，切换文件即时换，不占独立标签页。
+
+**② 浏览器页面**：`office_preview` 给的地址（`/api/office-better/index?session=…`）直接打开：
 
 - 列表页 → 每个文件的「打开 / 下载」
 - pptx 预览：读旁挂的 DeckSpec → 重新编译 → 逐页 `<svg>`，与导出的 pptx 同源
 - docx / xlsx 预览：文本大纲
+
+> 客户端半边由宿主 `dsh-client-modules` 在**启动时**扫描 `dsh.client` 声明并提供
+> `/plugins/<包名>/client.js`，所以新增/升级客户端 bundle 后需要重启 DSH 进程；
+> 只改服务端（工具、路由）可以热加载。
 
 ## 测试
 
 ```bash
 node test/smoke.mjs   # 编译 8 页 deck，校验 ZIP/XML 结构与 lint
 node test/mount.mjs   # 桩 ctx 跑 apply()，验证 9 个工具 + 预览路由端到端
+node test/client.mjs  # 桩 __ModuleLoader__/React/slots，验证 2 个 Slot 注册与 iframe src
 ```
 
 产物同时在 PowerPoint 里验证过：`Presentations.Open` 无修复提示，逐形状比对
