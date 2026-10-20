@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Office Better">
+  <defs>
+    <linearGradient id="ob-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1F3F"/>
+      <stop offset="1" stop-color="#123A6B"/>
+    </linearGradient>
+    <linearGradient id="ob-accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#67E8F9"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#ob-bg)"/>
+  <!-- 文档底 -->
+  <rect x="30" y="24" width="68" height="80" rx="8" fill="#FFFFFF" fill-opacity="0.96"/>
+  <!-- 标题条 -->
+  <rect x="40" y="34" width="34" height="6" rx="3" fill="#0B1F3F"/>
+  <!-- 版式网格：模拟幻灯片栅格 -->
+  <rect x="40" y="48" width="20" height="14" rx="3" fill="url(#ob-accent)"/>
+  <rect x="64" y="48" width="24" height="14" rx="3" fill="#0B1F3F" fill-opacity="0.18"/>
+  <rect x="40" y="67" width="24" height="10" rx="3" fill="#0B1F3F" fill-opacity="0.18"/>
+  <rect x="68" y="67" width="20" height="10" rx="3" fill="#0B1F3F" fill-opacity="0.18"/>
+  <rect x="40" y="82" width="48" height="4" rx="2" fill="#0B1F3F" fill-opacity="0.12"/>
+  <rect x="40" y="90" width="34" height="4" rx="2" fill="#0B1F3F" fill-opacity="0.12"/>
+</svg>

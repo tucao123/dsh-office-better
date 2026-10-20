@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Office Better",
+    "description": "Generate PowerPoint, Word and Excel files in-process (no external CLI), with a layout engine that checks overflow and contrast before export, plus a sidebar live preview."
+  }
+}

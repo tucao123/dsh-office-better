@@ -34,29 +34,33 @@ DSH（DeepSeek Harness）的 Office 文档插件：**确定性**生成 pptx / do
 
 ## 安装
 
-```bash
-# 1) 打包（在插件目录）
-npm pack
+用宿主的插件管理器安装（它负责装包、写 bundle 选择、处理版本门禁），**不要手改 profile 的 `package.json`、也不要在 profile 目录里跑 pnpm**：
 
-# 2) 装进 profile（用 tarball，别用 link：link 会让宿主包解析失败）
-cd "$DSH_HOME/profiles/web"        # Windows: C:\Users\<你>\.dsh\profiles\web
-pnpm add <上一步生成的 dsh-office-better-0.1.0.tgz>
-
-# 3) 把 bundle 写进 package.json 的 dsh.profile.bundles
-#    （dsh plugin add 只安装，不改配置）
+```text
+plugin_manager({
+  action: "install_bundle",
+  target: "C:\\Users\\<你>\\Desktop\\codeout\\projects\\dsh-office-better\\dsh-office-better"
+})
 ```
 
+- 本地目录安装是 **link**（软链到你的检出目录），改完代码不用重装；但换代码要**重启 DSH 进程**才会加载新的模块版本。
+- 安装时会校验 `peerDependencies` 与运行时版本。本包声明 `@deepseek-ai/dsh-tools: ^0.1.7-rc.1 || ^0.2.0-rc.1`；若运行时更新到新的 minor，需要同步放宽，否则会被 `installation rejected ... incompatible` 拦下。
+- 服务端能力（工具、预览路由）装完即可用；客户端半边（侧边栏面板）要重启后进 client module graph。
+
 ```json
+// package.json 相关字段
 {
-  "dsh": {
-    "profile": {
-      "bundles": ["...", "dsh-office-better"]
-    }
-  }
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "platform": "web" } }
 }
 ```
 
-改完 host 组合需要**重启 DSH 进程**才生效。
+`locale/zh.json`、`locale/en.json` 提供插件管理器里的标题与描述，`icon.svg` 提供图标——这三样缺了也能装，但插件列表里只会显示包名和默认图。
 
 ## 快速开始
 
@@ -93,6 +97,33 @@ office_deck({
 主题：`business-blue`、`academic-crimson`、`tech-cyan`、`warm-orange`、`gov-red`、`minimal-gray`、`nature-green`、`luxury-black`
 
 模板：`consulting`、`product-launch`、`academic-defense`、`minimal`、`gov-report`、`annual-report`
+
+## 样式覆盖（deck.style）
+
+模板之外还要改细节时，用 `style` 块；字段拼错会直接报错，不会静默忽略：
+
+```json
+{
+  "template": "consulting",
+  "style": {
+    "footer": "2026 年度经营分析 · 内部资料",
+    "pageNumber": "{n} / {total}",
+    "background": "FFF8F0",
+    "transition": "fade",
+    "meta": { "title": "季度回顾", "author": "战略部", "keywords": "季度,复盘", "description": "内部评审用" }
+  }
+}
+```
+
+| 字段 | 取值 | 作用 |
+|---|---|---|
+| `footer` | 字符串（≤60） | 页脚文案；`null` 关闭 |
+| `pageNumber` | `false` / `true` / 模板串 | `false` 隐藏、`true` 纯数字、`"{n} / {total}"` 自定义 |
+| `background` | 颜色 | 浅色内容页的默认底色（深色整幅页仍用主题深底） |
+| `transition` | `fade`/`push`/`wipe`/`morph`/`none` | 默认转场 |
+| `meta` | 对象 | 写入文档属性（标题/作者/关键词/描述） |
+
+单页也可以覆盖：`{ "layout": "bullets", …, "background": "F0F7FF", "transition": "push" }` —— 单页底色优先于全局，且 lint 的对比度检查会跟着换基准。
 
 ## 预览
 

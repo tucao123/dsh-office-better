@@ -206,12 +206,27 @@ office_* 工具执行 → 事件总线 → SSE → 侧边栏面板
 
 ---
 
-## 10. 路线图
+## 10. DeckSpec 样式覆盖（0.2.4）
+
+`deck.style` 之前只有 `transition` 被读取，其余字段（`footer` / `pageNumber` / `background` / `meta`）虽然写进了规范却没人消费——典型的"声明了但没实现"。0.2.4 补齐：
+
+- `parseStyleBlock()` 在输入期校验：未知字段直接报错（防 `pageNumer` 这类拼写错误静默失效），`pageNumber` 只接受 `false | true | 模板串`。
+- `resolveStyle({ pageNumber, background })` 统一产出 `pageNumberFormat` 与 `pageBg`，版式层不需要知道来源。
+- 单页 `background` 优先于全局；**深色整幅页（cover/section/ending）默认仍用自己的深底**，只有显式给单页 `background` 才覆盖。
+- `lintPages` 的对比度基准取自 `page.pageBg`，所以换底色后 lint 跟着换基准——测试里浅色页改成 `FFF8F0` 仍然 0 warning，就是这条链的证据。
+- `style.meta` 落到 docProps：`dc:title` / `dc:creator` / `cp:keywords` / `dc:description`（此前 `dc:description` 被错写成 keywords）。
+
+`test/smoke.mjs` 覆盖：全局底色、单页覆盖、深色页不受全局影响、页码关闭、`pageNumber: true` 输出纯数字、自定义页脚、单页与全局转场、meta 写进 `core.xml`、未知字段报错。
+
+---
+
+## 11. 路线图
 
 - [ ] 图片与形状原语（`office_image`、自由形状）
 - [x] 客户端侧边栏面板（Slot 注册 + iframe 指向 `/preview`）
+- [x] DeckSpec 逐页样式覆盖（`deck.style` + 单页 `background`/`transition`）
 - [ ] 面板改为事件推送（宿主侧 SSE `/events`），替掉 3 秒轮询
 - [ ] docx 图片、页眉页脚、目录域
 - [ ] xlsx 数字格式、条件格式
-- [ ] `office_deck` 支持多主题混排与逐页样式覆盖
+- [ ] `office_deck` 支持多主题混排
 - [ ] lint 阈值可配置（每份 deck 自带 `style.lint`）

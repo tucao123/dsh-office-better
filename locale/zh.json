@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Office 文档（Better）",
+    "description": "进程内直接生成 PPT / Word / Excel（不依赖外部 CLI），版式引擎在导出前就检查溢出与对比度，并带侧边栏实时预览。"
+  }
+}

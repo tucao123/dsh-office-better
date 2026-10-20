@@ -112,6 +112,73 @@ console.log(`lint: ${compiled.lint.errors.length} errors / ${compiled.lint.warni
 for (const w of compiled.lint.warnings.slice(0, 5)) console.log(`  ! ${w.code} 第${w.slide}页 ${w.message}`);
 for (const e of compiled.lint.errors.slice(0, 5)) console.log(`  ✗ ${e.code} 第${e.slide}页 ${e.message}`);
 console.log(`最小字号 ${compiled.lint.stats.smallestFont}pt · 最低对比度 ${compiled.lint.stats.minContrast.toFixed(2)}:1 · 形状 ${compiled.lint.stats.shapes}`);
+
+/* ---------------------------------------------------------------- 样式覆盖 */
+
+const styled = compileDeck({
+  template: 'consulting',
+  theme: 'tech-cyan',
+  style: {
+    footer: '自定义页脚',
+    pageNumber: false,
+    background: 'FFF8F0',
+    transition: 'fade',
+    meta: { title: '样式覆盖测试', author: 'QA', keywords: 'k1,k2', description: '覆盖说明' },
+  },
+  slides: [
+    { layout: 'cover', title: '样式封面', subtitle: '副标题' },
+    {
+      layout: 'bullets',
+      title: '要点',
+      items: [{ title: '一条', desc: '说明' }],
+      background: 'F0F7FF',
+      transition: 'push',
+    },
+    { layout: 'cards', title: '未覆盖的浅色页', cards: [{ title: '卡片', desc: '说明' }] },
+    { layout: 'ending', title: '完' },
+  ],
+});
+writeFileSync(join(outDir, 'styled.pptx'), styled.pptx);
+
+const pageText = (page) => page.shapes
+  .filter((s) => s.k === 'text' && s.paras)
+  .flatMap((s) => s.paras.map((p) => p.runs.map((r) => r.t).join('')))
+  .join(' | ');
+
+// 封面是深色整幅页：全局 background 只作用于浅色内容页，深色页保留主题深底
+if (styled.pages[0].pageBg !== '07161C') problems.push(`深色封面底色被误改：${styled.pages[0].pageBg}`);
+if (styled.pages[2].pageBg !== 'FFF8F0') problems.push(`style.background 未作用到浅色页：${styled.pages[2].pageBg}`);
+if (styled.pages[1].pageBg !== 'F0F7FF') problems.push(`单页 background 未覆盖：${styled.pages[1].pageBg}`);
+if (!pageText(styled.pages[1]).includes('自定义页脚')) problems.push('style.footer 未生效');
+if (pageText(styled.pages[1]).includes('02')) problems.push('pageNumber:false 仍然画了页码');
+if (styled.pages[1].transition !== 'push') problems.push(`单页 transition 未生效：${styled.pages[1].transition}`);
+if (styled.pages[0].transition !== 'fade') problems.push(`全局 transition 未生效：${styled.pages[0].transition}`);
+
+const styledZip = unzipSync(styled.pptx);
+const coreXml = styledZip.text('docProps/core.xml');
+if (!coreXml.includes('样式覆盖测试')) problems.push('style.meta.title 未写入 core.xml');
+if (!coreXml.includes(`<cp:keywords>k1,k2</cp:keywords>`)) problems.push('style.meta.keywords 未写入 core.xml');
+if (!coreXml.includes('覆盖说明')) problems.push('style.meta.description 未写入 core.xml');
+if (!styledZip.text('ppt/slides/slide2.xml').includes('<p:transition')) problems.push('第 2 页缺 transition 标记');
+
+const plain = compileDeck({
+  slides: [{ layout: 'bullets', title: '仅一页', items: [{ title: 'a' }] }],
+  style: { pageNumber: true },
+});
+const plainLabel = plain.pages[0].shapes.find((s) => s.label === '页码');
+const plainText = plainLabel ? plainLabel.paras[0].runs[0].t : '(无)';
+if (plainText !== '1') problems.push(`pageNumber:true 应输出 "1"，实际 "${plainText}"`);
+
+let rejectedStyleKey = false;
+try {
+  compileDeck({ style: { pageNumer: true }, slides: [{ layout: 'ending' }] });
+} catch (err) {
+  rejectedStyleKey = /未知字段/.test(err.message);
+}
+if (!rejectedStyleKey) problems.push('未知 style 字段未报错');
+
+console.log(`样式覆盖：深色封面 ${styled.pages[0].pageBg} · 浅色页 ${styled.pages[2].pageBg} · 单页覆盖 ${styled.pages[1].pageBg} · 页码 ${styled.style.pageNumberFormat === null ? '关闭' : '开启'} · meta ${coreXml.includes('QA') ? 'ok' : 'missing'}`);
+
 if (problems.length > 0) {
   console.error('\nFAIL:');
   for (const p of problems) console.error(' - ' + p);
