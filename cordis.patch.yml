@@ -1,0 +1,6 @@
+- insert:
+    - id: dsh-office-better
+      name: dsh-office-better
+      config:
+        workspaceDir: ''
+        previewPrefix: /api/office-better
